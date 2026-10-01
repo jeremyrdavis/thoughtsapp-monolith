@@ -11,6 +11,8 @@ public interface ThoughtRepository {
 
     boolean incrementThumbsDownIfApproved(ThoughtId id);
 
+    boolean delete(ThoughtId id);
+
     Optional<Thought> findById(ThoughtId id);
 
     Optional<Thought> findRandomApproved();

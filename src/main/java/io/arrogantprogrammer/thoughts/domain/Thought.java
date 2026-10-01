@@ -34,6 +34,12 @@ public class Thought {
         return new Thought(id, content, author, rating, status, createdAt, updatedAt);
     }
 
+    public void edit(Content content, Author author) {
+        this.content = content;
+        this.author = author;
+        this.updatedAt = Instant.now();
+    }
+
     public void thumbsUp() {
         this.rating = rating.incrementThumbsUp();
         this.updatedAt = Instant.now();

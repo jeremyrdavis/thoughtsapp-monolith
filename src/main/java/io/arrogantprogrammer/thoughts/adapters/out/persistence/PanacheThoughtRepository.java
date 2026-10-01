@@ -41,6 +41,11 @@ public class PanacheThoughtRepository implements ThoughtRepository {
     }
 
     @Override
+    public boolean delete(ThoughtId id) {
+        return ThoughtEntity.deleteById(id.value());
+    }
+
+    @Override
     public Optional<Thought> findById(ThoughtId id) {
         ThoughtEntity entity = ThoughtEntity.findById(id.value());
         return Optional.ofNullable(entity).map(ThoughtMapper::toDomain);

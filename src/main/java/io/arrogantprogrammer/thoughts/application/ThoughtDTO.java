@@ -4,7 +4,8 @@ import io.arrogantprogrammer.thoughts.domain.Thought;
 
 import java.util.UUID;
 
-public record ThoughtDTO(UUID id, String content, String authorName, String authorBio, int thumbsUp, int thumbsDown) {
+public record ThoughtDTO(UUID id, String content, String authorName, String authorBio, int thumbsUp, int thumbsDown,
+                          String status) {
 
     public static ThoughtDTO from(Thought thought) {
         return new ThoughtDTO(
@@ -13,6 +14,7 @@ public record ThoughtDTO(UUID id, String content, String authorName, String auth
                 thought.author().name(),
                 thought.author().bio(),
                 thought.rating().thumbsUp(),
-                thought.rating().thumbsDown());
+                thought.rating().thumbsDown(),
+                thought.status().name());
     }
 }

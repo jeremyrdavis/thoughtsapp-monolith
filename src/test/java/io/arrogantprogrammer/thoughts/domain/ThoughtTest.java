@@ -30,6 +30,21 @@ class ThoughtTest {
     }
 
     @Test
+    void editReplacesContentAndAuthorAndUpdatesTimestamp() throws InterruptedException {
+        Thought thought = Thought.create(CONTENT, AUTHOR);
+        Instant createdAt = thought.createdAt();
+        Thread.sleep(2);
+
+        Content newContent = new Content("An edited thought worth sharing instead.");
+        Author newAuthor = new Author("Grace Hopper", "Rear Admiral");
+        thought.edit(newContent, newAuthor);
+
+        assertEquals(newContent, thought.content());
+        assertEquals(newAuthor, thought.author());
+        assertTrue(thought.updatedAt().isAfter(createdAt));
+    }
+
+    @Test
     void thumbsUpIncrementsRatingAndUpdatesTimestamp() throws InterruptedException {
         Thought thought = Thought.create(CONTENT, AUTHOR);
         Instant createdAt = thought.createdAt();

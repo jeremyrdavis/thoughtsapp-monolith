@@ -119,4 +119,79 @@ class ThoughtApplicationServiceTest {
         assertTrue(thoughtApplicationService.thumbsUp(UUID.randomUUID()).isEmpty());
         assertEquals(0, thoughtRepository.count());
     }
+
+    @Test
+    @TestTransaction
+    void createPersistsANewInReviewThought() {
+        ThoughtEntity.deleteAll();
+
+        ThoughtDTO dto = thoughtApplicationService.create("A brand new thought worth sharing.", "Author", "Bio");
+
+        assertEquals("IN_REVIEW", dto.status());
+        assertEquals(1, thoughtRepository.count());
+        assertEquals(dto.id(), thoughtApplicationService.findById(dto.id()).orElseThrow().id());
+    }
+
+    @Test
+    @TestTransaction
+    void findByIdReturnsEmptyWhenMissing() {
+        assertFalse(thoughtApplicationService.findById(UUID.randomUUID()).isPresent());
+    }
+
+    @Test
+    @TestTransaction
+    void updateReplacesContentAndAuthor() {
+        ThoughtEntity.deleteAll();
+        Thought thought = Thought.create(new Content("The original thought worth sharing."), new Author("Original", null));
+        thoughtRepository.save(thought);
+
+        ThoughtDTO updated = thoughtApplicationService
+                .update(thought.id().value(), "An edited thought worth sharing now.", "Edited Author", "Edited Bio")
+                .orElseThrow();
+
+        assertEquals("An edited thought worth sharing now.", updated.content());
+        assertEquals("Edited Author", updated.authorName());
+        assertEquals("Edited Bio", updated.authorBio());
+
+        ThoughtDTO reloaded = thoughtApplicationService.findById(thought.id().value()).orElseThrow();
+        assertEquals("An edited thought worth sharing now.", reloaded.content());
+        assertEquals("Edited Author", reloaded.authorName());
+        assertEquals("Edited Bio", reloaded.authorBio());
+    }
+
+    @Test
+    @TestTransaction
+    void updateOnMissingThoughtReturnsEmpty() {
+        assertFalse(thoughtApplicationService.update(UUID.randomUUID(), "An edited thought worth sharing now.", "Author", null)
+                .isPresent());
+    }
+
+    @Test
+    @TestTransaction
+    void deleteRemovesTheThought() {
+        ThoughtEntity.deleteAll();
+        Thought thought = Thought.create(new Content("A thought that will be deleted."), new Author("Author", null));
+        thoughtRepository.save(thought);
+
+        assertTrue(thoughtApplicationService.delete(thought.id().value()));
+        assertFalse(thoughtApplicationService.findById(thought.id().value()).isPresent());
+    }
+
+    @Test
+    @TestTransaction
+    void deleteOnMissingThoughtReturnsFalse() {
+        assertFalse(thoughtApplicationService.delete(UUID.randomUUID()));
+    }
+
+    @Test
+    @TestTransaction
+    void listReturnsRequestedPageSize() {
+        ThoughtEntity.deleteAll();
+        for (int i = 0; i < 5; i++) {
+            thoughtRepository.save(Thought.create(
+                    new Content("A listed thought number " + i + " worth sharing."), new Author("Author", null)));
+        }
+
+        assertEquals(3, thoughtApplicationService.list(0, 3).size());
+    }
 }

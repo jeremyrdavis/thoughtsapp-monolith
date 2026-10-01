@@ -3,6 +3,7 @@ package io.arrogantprogrammer.thoughts.adapters.out.persistence;
 import io.arrogantprogrammer.thoughts.domain.Author;
 import io.arrogantprogrammer.thoughts.domain.Content;
 import io.arrogantprogrammer.thoughts.domain.Thought;
+import io.arrogantprogrammer.thoughts.domain.ThoughtId;
 import io.arrogantprogrammer.thoughts.domain.ThoughtRepository;
 import io.arrogantprogrammer.thoughts.domain.ThoughtStatus;
 import io.quarkus.test.TestTransaction;
@@ -120,5 +121,23 @@ class PanacheThoughtRepositoryTest {
         }
 
         assertEquals(3, repository.page(0, 3).size());
+    }
+
+    @Test
+    @TestTransaction
+    void deleteRemovesTheThoughtAndReturnsTrue() {
+        ThoughtEntity.deleteAll();
+        Thought thought = newThought();
+        repository.save(thought);
+
+        assertTrue(repository.delete(thought.id()));
+        assertTrue(repository.findById(thought.id()).isEmpty());
+    }
+
+    @Test
+    @TestTransaction
+    void deleteOnMissingThoughtReturnsFalse() {
+        ThoughtEntity.deleteAll();
+        assertFalse(repository.delete(ThoughtId.generate()));
     }
 }

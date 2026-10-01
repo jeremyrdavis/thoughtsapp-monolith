@@ -21,7 +21,7 @@ class HomeResourceTest {
     ThoughtApplicationService thoughtApplicationService;
 
     private static final ThoughtDTO SAMPLE = new ThoughtDTO(
-            UUID.randomUUID(), "A thought worth sharing with everyone.", "Ada Lovelace", "Mathematician", 3, 1);
+            UUID.randomUUID(), "A thought worth sharing with everyone.", "Ada Lovelace", "Mathematician", 3, 1, "APPROVED");
 
     @BeforeEach
     void setUp() {
@@ -61,7 +61,7 @@ class HomeResourceTest {
 
     @Test
     void thumbsUpRendersUpdatedCard() {
-        ThoughtDTO voted = new ThoughtDTO(SAMPLE.id(), SAMPLE.content(), SAMPLE.authorName(), SAMPLE.authorBio(), 4, 1);
+        ThoughtDTO voted = new ThoughtDTO(SAMPLE.id(), SAMPLE.content(), SAMPLE.authorName(), SAMPLE.authorBio(), 4, 1, SAMPLE.status());
         Mockito.when(thoughtApplicationService.thumbsUp(SAMPLE.id())).thenReturn(Optional.of(voted));
 
         given()
@@ -73,7 +73,7 @@ class HomeResourceTest {
 
     @Test
     void thumbsDownRendersUpdatedCard() {
-        ThoughtDTO voted = new ThoughtDTO(SAMPLE.id(), SAMPLE.content(), SAMPLE.authorName(), SAMPLE.authorBio(), 3, 2);
+        ThoughtDTO voted = new ThoughtDTO(SAMPLE.id(), SAMPLE.content(), SAMPLE.authorName(), SAMPLE.authorBio(), 3, 2, SAMPLE.status());
         Mockito.when(thoughtApplicationService.thumbsDown(SAMPLE.id())).thenReturn(Optional.of(voted));
 
         given()
