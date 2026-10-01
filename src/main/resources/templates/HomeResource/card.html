@@ -1,0 +1,10 @@
+{#if thought}
+<blockquote class="thought">
+    <p class="content">{thought.content}</p>
+    <footer class="author">&mdash; {thought.authorName}{#if thought.authorBio}, {thought.authorBio}{/if}</footer>
+    <p class="rating">👍 {thought.thumbsUp} &nbsp; 👎 {thought.thumbsDown}</p>
+</blockquote>
+{#else}
+<p class="empty-state">No thoughts to show yet. Check back soon!</p>
+{/if}
+<button hx-get="/thoughts/random" hx-target="#thought-card" hx-swap="innerHTML">Another</button>
