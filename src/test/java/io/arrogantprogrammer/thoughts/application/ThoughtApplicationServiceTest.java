@@ -10,8 +10,11 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
 class ThoughtApplicationServiceTest {
@@ -52,5 +55,68 @@ class ThoughtApplicationServiceTest {
                 new Author("Author", null)));
 
         assertFalse(thoughtApplicationService.randomApprovedThought().isPresent());
+    }
+
+    @Test
+    @TestTransaction
+    void thumbsUpIncrementsCountOfApprovedThought() {
+        ThoughtEntity.deleteAll();
+        Thought thought = Thought.create(new Content("A thought worth voting on today."), new Author("Author", null));
+        thought.approve();
+        thoughtRepository.save(thought);
+
+        ThoughtDTO dto = thoughtApplicationService.thumbsUp(thought.id().value()).orElseThrow();
+
+        assertEquals(1, dto.thumbsUp());
+        assertEquals(0, dto.thumbsDown());
+    }
+
+    @Test
+    @TestTransaction
+    void thumbsDownIncrementsCountOfApprovedThought() {
+        ThoughtEntity.deleteAll();
+        Thought thought = Thought.create(new Content("A thought worth voting on today."), new Author("Author", null));
+        thought.approve();
+        thoughtRepository.save(thought);
+
+        ThoughtDTO dto = thoughtApplicationService.thumbsDown(thought.id().value()).orElseThrow();
+
+        assertEquals(0, dto.thumbsUp());
+        assertEquals(1, dto.thumbsDown());
+    }
+
+    @Test
+    @TestTransaction
+    void thumbsUpOnMissingThoughtReturnsEmpty() {
+        assertFalse(thoughtApplicationService.thumbsUp(UUID.randomUUID()).isPresent());
+    }
+
+    @Test
+    @TestTransaction
+    void thumbsUpOnNonApprovedThoughtReturnsEmpty() {
+        ThoughtEntity.deleteAll();
+        Thought thought = Thought.create(new Content("A thought still waiting for review."), new Author("Author", null));
+        thoughtRepository.save(thought);
+
+        assertFalse(thoughtApplicationService.thumbsUp(thought.id().value()).isPresent());
+    }
+
+    @Test
+    @TestTransaction
+    void thumbsDownOnRemovedThoughtReturnsEmpty() {
+        ThoughtEntity.deleteAll();
+        Thought thought = Thought.create(new Content("A thought that has been removed."), new Author("Author", null));
+        thought.remove();
+        thoughtRepository.save(thought);
+
+        assertFalse(thoughtApplicationService.thumbsDown(thought.id().value()).isPresent());
+    }
+
+    @Test
+    @TestTransaction
+    void thumbsUpOnMissingThoughtDoesNotCreateARow() {
+        ThoughtEntity.deleteAll();
+        assertTrue(thoughtApplicationService.thumbsUp(UUID.randomUUID()).isEmpty());
+        assertEquals(0, thoughtRepository.count());
     }
 }

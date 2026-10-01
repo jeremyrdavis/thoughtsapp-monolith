@@ -25,6 +25,22 @@ public class PanacheThoughtRepository implements ThoughtRepository {
     }
 
     @Override
+    public boolean incrementThumbsUpIfApproved(ThoughtId id) {
+        boolean updated = ThoughtEntity.update("thumbsUp = thumbsUp + 1 where id = ?1 and status = ?2",
+                id.value(), ThoughtStatus.APPROVED) > 0;
+        ThoughtEntity.getEntityManager().clear();
+        return updated;
+    }
+
+    @Override
+    public boolean incrementThumbsDownIfApproved(ThoughtId id) {
+        boolean updated = ThoughtEntity.update("thumbsDown = thumbsDown + 1 where id = ?1 and status = ?2",
+                id.value(), ThoughtStatus.APPROVED) > 0;
+        ThoughtEntity.getEntityManager().clear();
+        return updated;
+    }
+
+    @Override
     public Optional<Thought> findById(ThoughtId id) {
         ThoughtEntity entity = ThoughtEntity.findById(id.value());
         return Optional.ofNullable(entity).map(ThoughtMapper::toDomain);

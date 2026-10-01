@@ -58,4 +58,50 @@ class HomeResourceTest {
                 .statusCode(200)
                 .body(containsString("A thought worth sharing with everyone."));
     }
+
+    @Test
+    void thumbsUpRendersUpdatedCard() {
+        ThoughtDTO voted = new ThoughtDTO(SAMPLE.id(), SAMPLE.content(), SAMPLE.authorName(), SAMPLE.authorBio(), 4, 1);
+        Mockito.when(thoughtApplicationService.thumbsUp(SAMPLE.id())).thenReturn(Optional.of(voted));
+
+        given()
+            .when().post("/thoughts/" + SAMPLE.id() + "/thumbs-up")
+            .then()
+                .statusCode(200)
+                .body(containsString("A thought worth sharing with everyone."));
+    }
+
+    @Test
+    void thumbsDownRendersUpdatedCard() {
+        ThoughtDTO voted = new ThoughtDTO(SAMPLE.id(), SAMPLE.content(), SAMPLE.authorName(), SAMPLE.authorBio(), 3, 2);
+        Mockito.when(thoughtApplicationService.thumbsDown(SAMPLE.id())).thenReturn(Optional.of(voted));
+
+        given()
+            .when().post("/thoughts/" + SAMPLE.id() + "/thumbs-down")
+            .then()
+                .statusCode(200)
+                .body(containsString("A thought worth sharing with everyone."));
+    }
+
+    @Test
+    void thumbsUpOnMissingThoughtReturns404() {
+        UUID missing = UUID.randomUUID();
+        Mockito.when(thoughtApplicationService.thumbsUp(missing)).thenReturn(Optional.empty());
+
+        given()
+            .when().post("/thoughts/" + missing + "/thumbs-up")
+            .then()
+                .statusCode(404);
+    }
+
+    @Test
+    void thumbsDownOnNonApprovedThoughtReturns404() {
+        UUID notApproved = UUID.randomUUID();
+        Mockito.when(thoughtApplicationService.thumbsDown(notApproved)).thenReturn(Optional.empty());
+
+        given()
+            .when().post("/thoughts/" + notApproved + "/thumbs-down")
+            .then()
+                .statusCode(404);
+    }
 }

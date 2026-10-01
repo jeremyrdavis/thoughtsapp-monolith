@@ -7,6 +7,10 @@ public interface ThoughtRepository {
 
     void save(Thought thought);
 
+    boolean incrementThumbsUpIfApproved(ThoughtId id);
+
+    boolean incrementThumbsDownIfApproved(ThoughtId id);
+
     Optional<Thought> findById(ThoughtId id);
 
     Optional<Thought> findRandomApproved();

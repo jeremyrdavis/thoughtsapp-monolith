@@ -2,7 +2,10 @@
 <blockquote class="thought">
     <p class="content">{thought.content}</p>
     <footer class="author">&mdash; {thought.authorName}{#if thought.authorBio}, {thought.authorBio}{/if}</footer>
-    <p class="rating">👍 {thought.thumbsUp} &nbsp; 👎 {thought.thumbsDown}</p>
+    <p class="rating">
+        <button hx-post="/thoughts/{thought.id}/thumbs-up" hx-target="#thought-card" hx-swap="innerHTML">👍 {thought.thumbsUp}</button>
+        <button hx-post="/thoughts/{thought.id}/thumbs-down" hx-target="#thought-card" hx-swap="innerHTML">👎 {thought.thumbsDown}</button>
+    </p>
 </blockquote>
 {#else}
 <p class="empty-state">No thoughts to show yet. Check back soon!</p>
