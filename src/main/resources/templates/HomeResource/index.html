@@ -2,13 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Positive Thoughts</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Moby Thoughts</title>
+    <link rel="stylesheet" href="/css/moby.css">
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
 </head>
 <body>
-<h1>Positive Thoughts</h1>
-<div id="thought-card">
-    {#include HomeResource/card.html thought=thought /}
-</div>
+<header class="app-header">
+    <svg class="logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M22.4552 10.2337C21.9204 9.87304 20.5156 9.71886 19.4939 9.99469C19.4388 8.97484 18.9139 8.11553 17.9543 7.36585L17.5987 7.1268L17.3616 7.48537C16.8959 8.19333 16.7005 9.1368 16.7696 9.99469C16.8247 10.523 17.0081 11.1171 17.3616 11.5485C16.0323 12.3215 14.8067 12.1461 9.37932 12.1461H1.0019C0.977207 13.3746 1.17477 15.7375 2.67343 17.6606C2.83925 17.8727 3.02058 18.0785 3.21744 18.2766C4.43599 19.5001 6.27756 20.3969 9.03146 20.3997C13.2325 20.4033 16.8317 18.1273 19.0211 12.6242C19.7415 12.6363 21.6431 12.7537 22.5738 10.9509C22.5963 10.9205 22.8108 10.4728 22.8108 10.4728L22.4559 10.2337H22.4552ZM6.46948 8.96635H4.11353V11.3279H6.46948V8.96635ZM9.51338 8.96635H7.15743V11.3279H9.51338V8.96635ZM12.5573 8.96635H10.2013V11.3279H12.5573V8.96635ZM15.6012 8.96635H13.2452V11.3279H15.6012V8.96635ZM3.42488 8.96635H1.06964V11.3279H3.42559V8.96635H3.42488ZM6.46878 5.98318H4.11283V8.34468H6.46878V5.98318ZM9.51267 5.98318H7.15672V8.34468H9.51267V5.98318ZM12.5566 5.98318H10.2006V8.34468H12.5566V5.98318ZM12.5566 3H10.2006V5.3615H12.5566V3Z" fill="currentColor"/></svg>
+    <h1>Moby Thoughts</h1>
+</header>
+<main>
+    <div id="thought-card">
+        {#include HomeResource/card.html thought=thought /}
+    </div>
+</main>
 </body>
 </html>
