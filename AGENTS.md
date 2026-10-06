@@ -14,6 +14,8 @@ The target repo is `jeremyrdavis/thoughtsapp-monolith`. The app is a prop for th
 - `./mvnw quarkus:dev` runs the app. Quarkus Dev Services starts PostgreSQL 17 automatically in dev and test. A container runtime (Docker or Podman) must be available. There is no Docker Compose file, and `application.properties` currently has no datasource config — don't add one by hand; Dev Services supplies it.
 - `./mvnw test -Dtest=ClassName#method` runs a single test.
 - No Dockerfile exists yet (issue 13). Once it does: `docker build` packages the app; the container needs PostgreSQL 17 passed in through `QUARKUS_DATASOURCE_JDBC_URL`, `QUARKUS_DATASOURCE_USERNAME` and `QUARKUS_DATASOURCE_PASSWORD`, since Dev Services doesn't run in the packaged app.
+- `./scripts/test-in-sandbox.sh` runs the full `./mvnw verify` gate inside a pinned JDK 25 + Maven container via the local Docker daemon — no local JDK 25 needed. Extra arguments pass through to Maven before `verify`, same convention as `-Dtest=...`. This is also what the AI PR reviewer (below) runs.
+- `./tests/run.sh` runs the PR-reviewer workflow's own script tests (no sbx, Docker or network needed), or one file, e.g. `bash tests/resolve-pr.test.sh`.
 
 ## Stack
 
@@ -74,6 +76,19 @@ DDD and Quarkus skills (`ddd-aggregates`, `ddd-foundations`, `ddd-persistence`, 
 - `./mvnw verify` passes.
 - At least one test names each acceptance criterion in the issue.
 - The PR body links the issue, lists the tests added and states the mutation score.
+
+## AI PR review
+
+`.github/workflows/pr-review.yml` reviews every pull request with a Copilot agent running inside a Docker Sandbox (`sbx`) microVM, and posts findings as one sticky comment. Ported from the sibling `pr-reviewer` demo; `README.md` has the full setup and threat model. Rules that protect the security model:
+
+- **Never execute anything from the pull request on the runner.** It is checked out to `./pr` and only passed to `sbx create --clone`. Scripts, prompt and actions come from `./trusted` (the base branch). Don't add a step that runs a file from `./pr`.
+- **Never put pull request text (title, body, branch names, labels) inside a `run:` script or an `${{ }}` that ends up in one.** Pass it through `env:`.
+- The agent job keeps `contents: read` only. The comment job runs no agent and no sandbox.
+- The agent's output always goes through `sanitize.sh` before it is posted. Only comments from `github-actions[bot]` that start with the marker are ever edited.
+- Third-party actions are pinned by commit SHA resolved with `git ls-remote`; never invent a SHA.
+- The workflow triggers on `pull_request_target`, so it only takes effect from the default branch (`main`).
+
+The reviewer's test command is `./scripts/test-in-sandbox.sh` (the full `./mvnw verify` gate), so a review checks this project's actual definition of done, not just a quick smoke test.
 
 ## Work backlog
 
