@@ -23,6 +23,10 @@ import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * Exercises the concurrent-votes acceptance criterion: simultaneous thumbs-up requests
+ * against the same thought must not lose updates to a read-modify-write race.
+ */
 @QuarkusTest
 class VotingConcurrencyTest {
 
@@ -31,6 +35,9 @@ class VotingConcurrencyTest {
     @Inject
     ThoughtRepository thoughtRepository;
 
+    // Fires CONCURRENT_REQUESTS thumbs-up requests at the same thought at (as close to)
+    // the same instant as possible, using latches to line every thread up at the starting
+    // gate, then asserts every request succeeded and every vote was actually counted.
     @Test
     void concurrentThumbsUpVotesAreNotLost() throws InterruptedException {
         UUID id = QuarkusTransaction.requiringNew().call(() -> {
@@ -50,6 +57,8 @@ class VotingConcurrencyTest {
 
         for (int i = 0; i < CONCURRENT_REQUESTS; i++) {
             pool.submit(() -> {
+                // Signal this worker is ready, then block until every other worker is too,
+                // so the requests actually overlap instead of trickling in one at a time.
                 ready.countDown();
                 await(start);
                 int status = given().post("/thoughts/" + id + "/thumbs-up").statusCode();
@@ -67,11 +76,14 @@ class VotingConcurrencyTest {
         assertEquals(CONCURRENT_REQUESTS, statusCodes.size());
         statusCodes.forEach(code -> assertEquals(200, code));
 
+        // The real assertion: no concurrent increment was silently dropped.
         int finalThumbsUp = QuarkusTransaction.requiringNew().call(() ->
                 thoughtRepository.findById(new ThoughtId(id)).orElseThrow().rating().thumbsUp());
         assertEquals(CONCURRENT_REQUESTS, finalThumbsUp);
     }
 
+    // Wraps the checked InterruptedException from CountDownLatch.await() so it can be
+    // used inside the unchecked Runnable submitted to the executor.
     private static void await(CountDownLatch latch) {
         try {
             latch.await();

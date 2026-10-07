@@ -16,6 +16,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * Integration tests for {@link ThoughtApplicationService}, run against the real
+ * Panache-backed repository so persistence and domain-to-DTO mapping are exercised
+ * together rather than through a mock.
+ */
 @QuarkusTest
 class ThoughtApplicationServiceTest {
 
@@ -25,6 +30,8 @@ class ThoughtApplicationServiceTest {
     @Inject
     ThoughtRepository thoughtRepository;
 
+    // The DTO returned for a random approved thought must mirror every field of the
+    // underlying aggregate, not just a subset.
     @Test
     @TestTransaction
     void mapsRandomApprovedThoughtToDto() {
@@ -46,6 +53,7 @@ class ThoughtApplicationServiceTest {
         assertEquals(0, dto.thumbsDown());
     }
 
+    // When only an IN_REVIEW thought exists, randomApprovedThought() must return empty.
     @Test
     @TestTransaction
     void isEmptyWhenNoThoughtsAreApproved() {
@@ -57,6 +65,7 @@ class ThoughtApplicationServiceTest {
         assertFalse(thoughtApplicationService.randomApprovedThought().isPresent());
     }
 
+    // Voting thumbs-up on an APPROVED thought persists the incremented count.
     @Test
     @TestTransaction
     void thumbsUpIncrementsCountOfApprovedThought() {
@@ -71,6 +80,7 @@ class ThoughtApplicationServiceTest {
         assertEquals(0, dto.thumbsDown());
     }
 
+    // Voting thumbs-down on an APPROVED thought persists the incremented count.
     @Test
     @TestTransaction
     void thumbsDownIncrementsCountOfApprovedThought() {
@@ -85,12 +95,14 @@ class ThoughtApplicationServiceTest {
         assertEquals(1, dto.thumbsDown());
     }
 
+    // Voting on an id that doesn't exist must return empty rather than throwing.
     @Test
     @TestTransaction
     void thumbsUpOnMissingThoughtReturnsEmpty() {
         assertFalse(thoughtApplicationService.thumbsUp(UUID.randomUUID()).isPresent());
     }
 
+    // Only APPROVED thoughts can be voted on; an IN_REVIEW thought must be rejected with empty.
     @Test
     @TestTransaction
     void thumbsUpOnNonApprovedThoughtReturnsEmpty() {
@@ -101,6 +113,7 @@ class ThoughtApplicationServiceTest {
         assertFalse(thoughtApplicationService.thumbsUp(thought.id().value()).isPresent());
     }
 
+    // Only APPROVED thoughts can be voted on; a REMOVED thought must be rejected with empty.
     @Test
     @TestTransaction
     void thumbsDownOnRemovedThoughtReturnsEmpty() {
@@ -112,6 +125,7 @@ class ThoughtApplicationServiceTest {
         assertFalse(thoughtApplicationService.thumbsDown(thought.id().value()).isPresent());
     }
 
+    // A vote on a missing id must be a pure no-op: it must not insert a new row as a side effect.
     @Test
     @TestTransaction
     void thumbsUpOnMissingThoughtDoesNotCreateARow() {
@@ -120,6 +134,8 @@ class ThoughtApplicationServiceTest {
         assertEquals(0, thoughtRepository.count());
     }
 
+    // create() persists a new thought starting in IN_REVIEW, and that row is immediately
+    // retrievable through findById().
     @Test
     @TestTransaction
     void createPersistsANewInReviewThought() {
@@ -132,12 +148,15 @@ class ThoughtApplicationServiceTest {
         assertEquals(dto.id(), thoughtApplicationService.findById(dto.id()).orElseThrow().id());
     }
 
+    // Looking up an id that was never created must return empty, not throw.
     @Test
     @TestTransaction
     void findByIdReturnsEmptyWhenMissing() {
         assertFalse(thoughtApplicationService.findById(UUID.randomUUID()).isPresent());
     }
 
+    // update() must both return the new values in its result and persist them, so a
+    // fresh findById() reload sees the same edited content, author, and bio.
     @Test
     @TestTransaction
     void updateReplacesContentAndAuthor() {
@@ -159,6 +178,7 @@ class ThoughtApplicationServiceTest {
         assertEquals("Edited Bio", reloaded.authorBio());
     }
 
+    // Updating an id that doesn't exist must return empty rather than throwing.
     @Test
     @TestTransaction
     void updateOnMissingThoughtReturnsEmpty() {
@@ -166,6 +186,7 @@ class ThoughtApplicationServiceTest {
                 .isPresent());
     }
 
+    // delete() removes the thought from the repository, so a subsequent findById() returns empty.
     @Test
     @TestTransaction
     void deleteRemovesTheThought() {
@@ -177,12 +198,14 @@ class ThoughtApplicationServiceTest {
         assertFalse(thoughtApplicationService.findById(thought.id().value()).isPresent());
     }
 
+    // Deleting an id that doesn't exist must return false rather than throwing.
     @Test
     @TestTransaction
     void deleteOnMissingThoughtReturnsFalse() {
         assertFalse(thoughtApplicationService.delete(UUID.randomUUID()));
     }
 
+    // With more rows available than the requested page size, list() must still cap the result at that size.
     @Test
     @TestTransaction
     void listReturnsRequestedPageSize() {
