@@ -15,6 +15,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
+/**
+ * Integration tests for {@code PanacheThoughtRepository} against the Dev Services
+ * PostgreSQL database, verifying the {@link ThoughtRepository} port is implemented
+ * correctly end to end (not against a mock).
+ */
 @QuarkusTest
 class PanacheThoughtRepositoryTest {
 
@@ -27,6 +32,7 @@ class PanacheThoughtRepositoryTest {
                 new Author("Ada Lovelace", "Mathematician"));
     }
 
+    // Saving a thought and reading it back by id must reproduce every field exactly.
     @Test
     @TestTransaction
     void roundTripsThoughtById() {
@@ -44,6 +50,8 @@ class PanacheThoughtRepositoryTest {
         assertEquals(thought.updatedAt(), found.updatedAt());
     }
 
+    // Saving a thought that was already persisted (same id) must update the existing
+    // row rather than inserting a duplicate.
     @Test
     @TestTransaction
     void savingAnExistingThoughtUpdatesInPlace() {
@@ -59,6 +67,7 @@ class PanacheThoughtRepositoryTest {
         assertEquals(ThoughtStatus.APPROVED, found.status());
     }
 
+    // Looking up an id that was never persisted must return an empty Optional, not throw.
     @Test
     @TestTransaction
     void findByIdReturnsEmptyWhenMissing() {
@@ -67,6 +76,8 @@ class PanacheThoughtRepositoryTest {
                 new Author("Author", null)).id()).isEmpty());
     }
 
+    // Seeds a mix of APPROVED, IN_REVIEW, and REMOVED thoughts, then draws random
+    // thoughts repeatedly to check the query's WHERE clause never leaks a non-approved row.
     @Test
     @TestTransaction
     void findRandomApprovedNeverReturnsNonApprovedThoughts() {
@@ -91,6 +102,7 @@ class PanacheThoughtRepositoryTest {
         }
     }
 
+    // When only non-approved thoughts exist, the random-approved query must return empty, not an arbitrary row.
     @Test
     @TestTransaction
     void findRandomApprovedIsEmptyWhenNoneApproved() {
@@ -102,6 +114,7 @@ class PanacheThoughtRepositoryTest {
         assertFalse(repository.findRandomApproved().isPresent());
     }
 
+    // count() must reflect exactly the number of rows persisted, no more and no less.
     @Test
     @TestTransaction
     void countReflectsPersistedThoughts() {
@@ -112,6 +125,7 @@ class PanacheThoughtRepositoryTest {
         assertEquals(2, repository.count());
     }
 
+    // With more rows available than the requested page size, page() must still cap the result at that size.
     @Test
     @TestTransaction
     void pageReturnsAtMostRequestedSize() {
@@ -123,6 +137,7 @@ class PanacheThoughtRepositoryTest {
         assertEquals(3, repository.page(0, 3).size());
     }
 
+    // Deleting a thought that exists returns true and the row is actually gone afterward.
     @Test
     @TestTransaction
     void deleteRemovesTheThoughtAndReturnsTrue() {
@@ -134,6 +149,7 @@ class PanacheThoughtRepositoryTest {
         assertTrue(repository.findById(thought.id()).isEmpty());
     }
 
+    // Deleting an id that doesn't exist must return false rather than throwing.
     @Test
     @TestTransaction
     void deleteOnMissingThoughtReturnsFalse() {
